@@ -1,4 +1,5 @@
 <?php
+
 namespace common\models;
 
 use Yii;
@@ -48,6 +49,26 @@ class User extends ActiveRecord implements IdentityInterface
     }
 
     /**
+     * {@inheritDoc}
+     * @return array
+     */
+    public function attributeLabels()
+    {
+        return [
+            'id' => Yii::t('app', 'ID'),
+            'username' => Yii::t('app', 'Username'),
+            'auth_key' => Yii::t('app', 'Auth Key'),
+            'password_hash' => Yii::t('app', 'Password Hash'),
+            'password_reset_token' => Yii::t('app', 'Password Reset Token'),
+            'email' => Yii::t('app', 'Email'),
+            'status' => Yii::t('app', 'Status'),
+            'created_at' => Yii::t('app', 'Created At'),
+            'updated_at' => Yii::t('app', 'Updated At'),
+            'verification_token' => Yii::t('app', 'Verification Token'),
+        ];
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function rules()
@@ -56,6 +77,29 @@ class User extends ActiveRecord implements IdentityInterface
             ['status', 'default', 'value' => self::STATUS_INACTIVE],
             ['status', 'in', 'range' => [self::STATUS_ACTIVE, self::STATUS_INACTIVE, self::STATUS_DELETED]],
         ];
+    }
+
+    /**
+     * @return array
+     */
+    public function getStatusLabels()
+    {
+        return [
+            self::STATUS_INACTIVE => '待激活',
+            self::STATUS_ACTIVE => '已激活',
+            self::STATUS_DELETED => '已禁用',
+        ];
+    }
+
+    /**
+     * Disable a user
+     *
+     * @return bool
+     */
+    public function disable()
+    {
+        $this->status = self::STATUS_DELETED;
+        return $this->save();
     }
 
     /**
@@ -109,10 +153,11 @@ class User extends ActiveRecord implements IdentityInterface
      * @param string $token verify email token
      * @return static|null
      */
-    public static function findByVerificationToken($token) {
+    public static function findByVerificationToken($token)
+    {
         return static::findOne([
             'verification_token' => $token,
-            'status' => self::STATUS_INACTIVE
+            'status' => self::STATUS_INACTIVE,
         ]);
     }
 
@@ -128,7 +173,7 @@ class User extends ActiveRecord implements IdentityInterface
             return false;
         }
 
-        $timestamp = (int) substr($token, strrpos($token, '_') + 1);
+        $timestamp = (int)substr($token, strrpos($token, '_') + 1);
         $expire = Yii::$app->params['user.passwordResetTokenExpire'];
         return $timestamp + $expire >= time();
     }
