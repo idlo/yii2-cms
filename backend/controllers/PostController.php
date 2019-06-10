@@ -2,6 +2,7 @@
 
 namespace backend\controllers;
 
+use common\models\Article;
 use Yii;
 use common\models\Post;
 use common\models\PostSearch;
@@ -31,6 +32,7 @@ class PostController extends Controller
 
     /**
      * Lists all Post models.
+     *
      * @return mixed
      */
     public function actionIndex()
@@ -46,6 +48,7 @@ class PostController extends Controller
 
     /**
      * Displays a single Post model.
+     *
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
@@ -60,24 +63,39 @@ class PostController extends Controller
     /**
      * Creates a new Post model.
      * If creation is successful, the browser will be redirected to the 'view' page.
+     *
      * @return mixed
      */
     public function actionCreate()
     {
         $model = new Post();
+        $article = new Article();
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->id]);
+        if ($model->load(Yii::$app->request->post()) && $article->load(Yii::$app->request->post())) {
+            $transaction = Post::getDb()->beginTransaction();
+            try {
+                $model->save();
+                $article->post_id = $model->id;
+                $article->save();
+                $transaction->commit();
+                return $this->redirect(['view', 'id' => $model->id]);
+            } catch (\Exception $e) {
+                $transaction->rollBack();
+            } catch (\Throwable $e) {
+                $transaction->rollBack();
+            }
         }
 
         return $this->render('create', [
             'model' => $model,
+            'article' => $article,
         ]);
     }
 
     /**
      * Updates an existing Post model.
      * If update is successful, the browser will be redirected to the 'view' page.
+     *
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
@@ -85,26 +103,37 @@ class PostController extends Controller
     public function actionUpdate($id)
     {
         $model = $this->findModel($id);
+        $article = Article::findOne(['post_id' => $model->id]);
 
-        if ($model->load(Yii::$app->request->post()) && $model->save()) {
+        if ($model->load(Yii::$app->request->post()) && $article->load(Yii::$app->request->post())) {
+            Post::getDb()->transaction(function ($db) use ($model, $article) {
+                $model->save();
+                $article->save();
+            });
             return $this->redirect(['view', 'id' => $model->id]);
         }
 
         return $this->render('update', [
             'model' => $model,
+            'article' => $article,
         ]);
     }
 
     /**
      * Deletes an existing Post model.
      * If deletion is successful, the browser will be redirected to the 'index' page.
+     *
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
      */
     public function actionDelete($id)
     {
-        $this->findModel($id)->delete();
+        Post::getDb()->transaction(function ($db) use ($id) {
+            $model = $this->findModel($id);
+            Article::findOne(['post_id' => $model->id])->delete();
+            $model->delete();
+        });
 
         return $this->redirect(['index']);
     }
@@ -112,6 +141,7 @@ class PostController extends Controller
     /**
      * Finds the Post model based on its primary key value.
      * If the model is not found, a 404 HTTP exception will be thrown.
+     *
      * @param integer $id
      * @return Post the loaded model
      * @throws NotFoundHttpException if the model cannot be found

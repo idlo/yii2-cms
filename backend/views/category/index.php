@@ -24,16 +24,18 @@ $this->params['breadcrumbs'][] = $this->title;
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'columns' => [
-            ['class' => 'yii\grid\SerialColumn'],
+//            ['class' => 'yii\grid\SerialColumn'],
 
             'id',
-            'parent_id',
             'name',
             'alias',
-            'sort',
-            //'remark',
-            //'created_at',
-            //'updated_at',
+            'remark',
+            [
+                'attribute' => 'created_at',
+                'value' => function ($model) {
+                    return date('Y-m-d H:i:s', $model->created_at);
+                },
+            ],
 
             ['class' => 'yii\grid\ActionColumn'],
         ],

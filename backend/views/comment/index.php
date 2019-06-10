@@ -14,9 +14,7 @@ $this->params['breadcrumbs'][] = $this->title;
 
     <h1><?= Html::encode($this->title) ?></h1>
 
-    <p>
-        <?= Html::a(Yii::t('app', 'Create Comment'), ['create'], ['class' => 'btn btn-success']) ?>
-    </p>
+    <p></p>
 
     <?php // echo $this->render('_search', ['model' => $searchModel]); ?>
 
@@ -24,22 +22,53 @@ $this->params['breadcrumbs'][] = $this->title;
         'dataProvider' => $dataProvider,
         'filterModel' => $searchModel,
         'columns' => [
-            ['class' => 'yii\grid\SerialColumn'],
-
             'id',
-            'post_id',
-            'user_id',
-            'admin_id',
-            'reply_to',
-            //'nickname',
-            //'email:email',
-            //'content',
-            //'ip',
-            //'status',
-            //'created_at',
-            //'updated_at',
+            [
+                'attribute' => 'content',
+                'value' => 'subContent',
+                'options' => ['style' => 'width:12px']
+            ],
+            [
+                'attribute' => 'user_name',
+                'value' => 'user.username',
+            ],
+            [
+                'attribute' => 'status',
+                'value' => function ($model) {
+                    return $model->statusLabels[$model->status];
+                },
+                'filter' => $searchModel->statusLabels,
+                'contentOptions' => function ($model) {
+                    return $model->status == 0 ? ['class' => 'bg-danger'] : [];
+                },
+            ],
+            [
+                'attribute' => 'post_title',
+                'value' => 'post.title',
+            ],
+            [
+                'attribute' => 'created_at',
+                'value' => function ($model) {
+                    return date('Y-m-d H:i:s', $model->created_at);
+                },
+            ],
+            [
+                'class' => 'yii\grid\ActionColumn',
+                'template' => '{update}{delete}{approve}',
+                'buttons' => [
+                    'approve' => function ($url, $model, $key) {
+                        $options = [
+                            'title' => Yii::t('app', 'Approve'),
+                            'aria-label' => Yii::t('app', 'Approve'),
+                            'data-confirm' => Yii::t('app', 'Are you sure the approval is passed?'),
+                            'date-method' => 'POST',
+                            'data-pjx' => 0,
+                        ];
 
-            ['class' => 'yii\grid\ActionColumn'],
+                        return Html::a('<span class="glyphicon glyphicon-check"></span>', $url, $options);
+                    },
+                ],
+            ],
         ],
     ]); ?>
 

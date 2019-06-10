@@ -25,6 +25,15 @@ use Yii;
 class Comment extends \yii\db\ActiveRecord
 {
     /**
+     * 状态 审核通过
+     */
+    const STATUS_PASS = 1;
+    /**
+     * 状态 未审核
+     */
+    const STATUS_WAIT = 0;
+
+    /**
      * {@inheritdoc}
      */
     public static function tableName()
@@ -53,7 +62,7 @@ class Comment extends \yii\db\ActiveRecord
         return [
             'id' => Yii::t('app', 'ID'),
             'post_id' => Yii::t('app', 'Post ID'),
-            'user_id' => Yii::t('app', 'User ID'),
+            'uid' => Yii::t('app', 'Uid'),
             'admin_id' => Yii::t('app', 'Admin ID'),
             'reply_to' => Yii::t('app', 'Reply To'),
             'nickname' => Yii::t('app', 'Nickname'),
@@ -61,6 +70,8 @@ class Comment extends \yii\db\ActiveRecord
             'content' => Yii::t('app', 'Content'),
             'ip' => Yii::t('app', 'Ip'),
             'status' => Yii::t('app', 'Status'),
+            'user_name' => Yii::t('app', 'User Name'),
+            'post_title' => Yii::t('app', 'Title'),
             'created_at' => Yii::t('app', 'Created At'),
             'updated_at' => Yii::t('app', 'Updated At'),
         ];
@@ -72,5 +83,29 @@ class Comment extends \yii\db\ActiveRecord
     public function getPost()
     {
         return $this->hasOne(Post::className(), ['id' => 'post_id']);
+    }
+
+    public function getStatusLabels()
+    {
+        return [
+            self::STATUS_WAIT => Yii::t('app', 'Status Wait'),
+            self::STATUS_PASS => Yii::t('app', 'Status Pass'),
+        ];
+    }
+
+    public function getUser()
+    {
+        return $this->hasOne(Admin::className(), ['id' => 'user_id']);
+    }
+
+    public function approve()
+    {
+        $this->status = self::STATUS_PASS;
+        return $this->save();
+    }
+
+    public function getSubContent()
+    {
+        return mb_strlen($this->content) > 20 ? mb_substr( $this->content, 0, 20) . '...' : $this->content;
     }
 }

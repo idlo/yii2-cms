@@ -3,6 +3,9 @@
 namespace common\models;
 
 use Yii;
+use yii\behaviors\TimestampBehavior;
+use yii\db\ActiveQuery;
+use yii\helpers\Url;
 
 /**
  * This is the model class for table "post".
@@ -26,11 +29,39 @@ use Yii;
 class Post extends \yii\db\ActiveRecord
 {
     /**
+     * 文章状态 草稿
+     */
+    const STATUS_DRAFT = 0;
+    /**
+     * 文章状态 发布
+     */
+    const STATUS_PUBLISHED = 1;
+
+    /**
+     * 文章状态 删除
+     */
+    const STATUS_TRASH = -1;
+
+    /**
+     * Article old tags
+     *
+     * @var string
+     */
+    private $_oldTags = '';
+
+    /**
      * {@inheritdoc}
      */
     public static function tableName()
     {
         return 'post';
+    }
+
+    public function behaviors()
+    {
+        return [
+            TimestampBehavior::className(),
+        ];
     }
 
     /**
@@ -40,7 +71,7 @@ class Post extends \yii\db\ActiveRecord
     {
         return [
             [['type', 'cid', 'author_id', 'status', 'created_at', 'updated_at'], 'integer'],
-            [['cid', 'author_id', 'title', 'created_at', 'updated_at'], 'required'],
+            [['cid', 'title'], 'required'],
             [['title', 'source', 'image', 'tags'], 'string', 'max' => 255],
             [['summary'], 'string', 'max' => 1024],
         ];
@@ -54,25 +85,60 @@ class Post extends \yii\db\ActiveRecord
         return [
             'id' => Yii::t('app', 'ID'),
             'type' => Yii::t('app', 'Type'),
-            'cid' => Yii::t('app', 'Cid'),
+            'cid' => Yii::t('app', 'Category'),
             'author_id' => Yii::t('app', 'Author ID'),
+            'author_name' => Yii::t('app', 'Author Name'),
             'title' => Yii::t('app', 'Title'),
             'summary' => Yii::t('app', 'Summary'),
             'source' => Yii::t('app', 'Source'),
             'image' => Yii::t('app', 'Image'),
             'status' => Yii::t('app', 'Status'),
-            'tags' => Yii::t('app', 'Tags'),
+            'tags' => Yii::t('app', 'Tag'),
             'created_at' => Yii::t('app', 'Created At'),
             'updated_at' => Yii::t('app', 'Updated At'),
         ];
     }
 
     /**
+     * 文章状态标签
+     *
+     * @return array
+     */
+    public function getStatusLabels()
+    {
+        return [
+            self::STATUS_DRAFT => '草稿',
+            self::STATUS_PUBLISHED => '发布',
+        ];
+    }
+
+    /**
      * @return \yii\db\ActiveQuery
      */
-    public function getArticles()
+    public function getArticle()
     {
-        return $this->hasMany(Article::className(), ['post_id' => 'id']);
+        return $this->hasOne(Article::className(), ['post_id' => 'id']);
+    }
+
+    /**
+     * @return ActiveQuery
+     */
+    public function getAuthor()
+    {
+        return $this->hasOne(Admin::className(), ['id' => 'author_id']);
+    }
+
+    public function getCategories()
+    {
+        return Category::find()->all();
+    }
+
+    /**
+     * @return ActiveQuery
+     */
+    public function getCategory()
+    {
+        return $this->hasOne(Category::className(), ['id' => 'cid']);
     }
 
     /**
@@ -81,5 +147,63 @@ class Post extends \yii\db\ActiveRecord
     public function getComments()
     {
         return $this->hasMany(Comment::className(), ['post_id' => 'id']);
+    }
+
+    /**
+     * @return string
+     */
+    public function getUrl()
+    {
+        return Url::to(['/post/view', 'id' => $this->id]);
+    }
+
+    /**
+     * {@inheritDoc}
+     * @param bool $insert
+     * @return bool
+     */
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+
+        if ($insert) {
+            $this->author_id = Yii::$app->user->id ?: 0;
+        }
+
+        return true;
+    }
+
+    /**
+     * {@inheritDoc}
+     * @param bool $insert
+     * @param array $changedAttributes
+     */
+    public function afterSave($insert, $changedAttributes)
+    {
+        parent::afterSave($insert, $changedAttributes);
+
+        Tag::updateFreq($this->_oldTags, $this->tags);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function afterFind()
+    {
+        parent::afterFind();
+
+        $this->_oldTags = $this->tags;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function afterDelete()
+    {
+        parent::afterDelete();
+
+        Tag::updateFreq($this->_oldTags, '');
     }
 }

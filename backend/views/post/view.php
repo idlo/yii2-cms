@@ -31,16 +31,33 @@ $this->params['breadcrumbs'][] = $this->title;
         'attributes' => [
             'id',
             'type',
-            'cid',
-            'author_id',
+            [
+                'attribute' => 'author_id',
+                'value' => $model->author->username,
+            ],
             'title',
-            'summary',
-            'source',
-            'image',
-            'status',
+            [
+                'attribute' => 'cid',
+                'value' => $model->category->name,
+            ],
+            [
+                'attribute' => 'content',
+                'label' => '内容',
+                'value' => $model->article->content,
+            ],
             'tags',
-            'created_at',
-            'updated_at',
+            [
+                'attribute' => 'status',
+                'value' => $model->statusLabels[$model->status],
+            ],
+            [
+                'attribute' => 'created_at',
+                'value' => date('Y-m-d H:i:s', $model->created_at),
+            ],
+            [
+                'attribute' => 'updated_at',
+                'value' => date('Y-m-d H:i:s', $model->updated_at),
+            ],
         ],
     ]) ?>
 

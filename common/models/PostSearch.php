@@ -2,9 +2,11 @@
 
 namespace common\models;
 
+use Yii;
 use yii\base\Model;
 use yii\data\ActiveDataProvider;
 use common\models\Post;
+use yii\helpers\ArrayHelper;
 
 /**
  * PostSearch represents the model behind the search form of `common\models\Post`.
@@ -12,13 +14,22 @@ use common\models\Post;
 class PostSearch extends Post
 {
     /**
+     * {@inheritDoc}
+     * @return array
+     */
+    public function attributes()
+    {
+        return ArrayHelper::merge(parent::attributes(), ['author_name']);
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function rules()
     {
         return [
             [['id', 'type', 'cid', 'author_id', 'status', 'created_at', 'updated_at'], 'integer'],
-            [['title', 'summary', 'source', 'image', 'tags'], 'safe'],
+            [['title', 'summary', 'source', 'author_name', 'tags'], 'safe'],
         ];
     }
 
@@ -46,7 +57,13 @@ class PostSearch extends Post
 
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
-        ]);
+            'pagination' => [
+                'pageSize' => 10,
+            ],
+            'sort' => [
+                'defaultOrder' => 'id DESC',
+                'attributes' => ['id', 'status', 'created_at'],
+            ],]);
 
         $this->load($params);
 
@@ -58,20 +75,20 @@ class PostSearch extends Post
 
         // grid filtering conditions
         $query->andFilterWhere([
-            'id' => $this->id,
-            'type' => $this->type,
+            'post.id' => $this->id,
             'cid' => $this->cid,
-            'author_id' => $this->author_id,
-            'status' => $this->status,
+            'type' => $this->type,
+            'post.status' => $this->status,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ]);
 
-        $query->andFilterWhere(['like', 'title', $this->title])
-            ->andFilterWhere(['like', 'summary', $this->summary])
-            ->andFilterWhere(['like', 'source', $this->source])
-            ->andFilterWhere(['like', 'image', $this->image])
-            ->andFilterWhere(['like', 'tags', $this->tags]);
+        $query->andFilterWhere(['like', 'title', $this->title]);
+
+        $query->innerJoin(Admin::tableName(), 'post.author_id = admin.id');
+
+        $query->andFilterWhere(['like', 'admin.username', $this->author_name]);
+
 
         return $dataProvider;
     }
