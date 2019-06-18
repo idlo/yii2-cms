@@ -62,9 +62,12 @@ return [
     'Admin' => '管理员',
     'Create Admin' => '新增管理员',
     'Update Admin: {name}' => '修改管理员: {name}',
+    'Privilege Admin: {name}' => '权限设置: {name}',
+    'Privilege' => '授权',
     'Signup' => '注册',
     'Registration Success!' => '注册成功！',
     'Please fill out the following fields to signup:' => '请填写下列信息注册：',
     'Reset Password' => '重置密码',
     'Please fill out the following fields to reset password:' => '请填写下列信息重置密码：',
+    'Comment Auditor' => '评论审核员',
 ];

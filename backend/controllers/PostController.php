@@ -2,13 +2,16 @@
 
 namespace backend\controllers;
 
-use common\models\Article;
 use Yii;
+use Exception;
+use Throwable;
 use common\models\Post;
-use common\models\PostSearch;
 use yii\web\Controller;
-use yii\web\NotFoundHttpException;
+use common\models\Article;
 use yii\filters\VerbFilter;
+use common\models\PostSearch;
+use yii\web\NotFoundHttpException;
+use yii\web\ForbiddenHttpException;
 
 /**
  * PostController implements the CRUD actions for Post model.
@@ -65,9 +68,14 @@ class PostController extends Controller
      * If creation is successful, the browser will be redirected to the 'view' page.
      *
      * @return mixed
+     * @throws ForbiddenHttpException
      */
     public function actionCreate()
     {
+        if (!Yii::$app->user->can('createPost')) {
+            throw new ForbiddenHttpException('暂无权限执行此操作');
+        }
+
         $model = new Post();
         $article = new Article();
 
@@ -79,9 +87,9 @@ class PostController extends Controller
                 $article->save();
                 $transaction->commit();
                 return $this->redirect(['view', 'id' => $model->id]);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $transaction->rollBack();
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 $transaction->rollBack();
             }
         }
@@ -99,9 +107,13 @@ class PostController extends Controller
      * @param integer $id
      * @return mixed
      * @throws NotFoundHttpException if the model cannot be found
+     * @throws \Throwable
      */
     public function actionUpdate($id)
     {
+        if (!Yii::$app->user->can('updatePost')) {
+            throw new ForbiddenHttpException('暂无权限执行此操作');
+        }
         $model = $this->findModel($id);
         $article = Article::findOne(['post_id' => $model->id]);
 
@@ -125,10 +137,13 @@ class PostController extends Controller
      *
      * @param integer $id
      * @return mixed
-     * @throws NotFoundHttpException if the model cannot be found
+     * @throws Throwable
      */
     public function actionDelete($id)
     {
+        if (!Yii::$app->user->can('deletePost')) {
+            throw new ForbiddenHttpException('暂无权限执行此操作');
+        }
         Post::getDb()->transaction(function ($db) use ($id) {
             $model = $this->findModel($id);
             Article::findOne(['post_id' => $model->id])->delete();
