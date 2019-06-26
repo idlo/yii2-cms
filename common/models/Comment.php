@@ -85,6 +85,11 @@ class Comment extends \yii\db\ActiveRecord
         return $this->hasOne(Post::className(), ['id' => 'post_id']);
     }
 
+    /**
+     * 获取状态标签
+     *
+     * @return array
+     */
     public function getStatusLabels()
     {
         return [
@@ -93,19 +98,46 @@ class Comment extends \yii\db\ActiveRecord
         ];
     }
 
+    /**
+     * 获取评论用户
+     *
+     * @return \yii\db\ActiveQuery
+     */
     public function getUser()
     {
         return $this->hasOne(Admin::className(), ['id' => 'user_id']);
     }
 
+    /**
+     * 审核评论
+     *
+     * @return bool
+     */
     public function approve()
     {
         $this->status = self::STATUS_PASS;
         return $this->save();
     }
 
-    public function getSubContent()
+    /**
+     * 截取指定长度的评论
+     *
+     * @param int $length
+     * @return string
+     */
+    public function getSubContent($length = 20)
     {
-        return mb_strlen($this->content) > 20 ? mb_substr( $this->content, 0, 20) . '...' : $this->content;
+        return mb_strlen($this->content) > $length ? mb_substr($this->content, 0, $length) . '...' : $this->content;
+    }
+
+    /**
+     * 获取最近评论
+     *
+     * @param int $limit
+     * @return array|\yii\db\ActiveRecord[]
+     */
+    public function findRecentComment($limit = 10)
+    {
+        return Comment::find()->where(['status' => self::STATUS_PASS])->limit($limit)->orderBy('created_at DESC')->all();
     }
 }

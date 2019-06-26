@@ -63,6 +63,7 @@ class Tag extends \yii\db\ActiveRecord
      *
      * @param $oldTags
      * @param $newTags
+     * @throws
      */
     public static function updateFreq($oldTags, $newTags)
     {
@@ -132,4 +133,33 @@ class Tag extends \yii\db\ActiveRecord
         return;
     }
 
+    /**
+     * 获取标签及权重
+     *
+     * @param int $limits
+     * @return array
+     */
+    public static function findTagWeights($limits = 20)
+    {
+        $tagWeights = [];
+
+        $total = self::find()->limit($limits)->count();
+        $tags = self::find()->orderBy('freq DESC')->limit($limits)->all();
+
+        $step = ceil($total / 5);
+
+        if (!$total) {
+            return $tagWeights;
+        }
+
+        $counter = 1;
+        foreach ($tags as $tag) {
+            $weight = ceil($counter / $step) + 1;
+            $tagWeights[$tag->name] = $weight;
+            $counter++;
+        }
+        ksort($tagWeights);
+
+        return $tagWeights;
+    }
 }

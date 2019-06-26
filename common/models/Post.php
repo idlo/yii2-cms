@@ -5,6 +5,7 @@ namespace common\models;
 use Yii;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveQuery;
+use yii\helpers\Html;
 use yii\helpers\Url;
 
 /**
@@ -149,6 +150,36 @@ class Post extends \yii\db\ActiveRecord
         return $this->hasMany(Comment::className(), ['post_id' => 'id']);
     }
 
+    /**
+     * Get begin content
+     *
+     * @param int $length
+     * @return string
+     */
+    public function getBegin($length = 288)
+    {
+        return mb_strlen($this->article->content) > $length ? mb_substr($this->article->content, 0, $length) . '...' : $this->article->content;
+    }
+
+    /**
+     * Get tag links
+     *
+     * @return array
+     */
+    public function getTagLinks()
+    {
+        $links = [];
+        foreach (Tag::str2Array($this->tags) as $tag) {
+            $links[] = Html::a(Html::encode($tag), ['post/index', 'PostSearch[tags]' => $tag]);
+        }
+
+        return $links;
+    }
+
+    public function getCommentCount()
+    {
+        return Comment::find()->where(['post_id' => $this->id])->count('id');
+    }
     /**
      * @return string
      */

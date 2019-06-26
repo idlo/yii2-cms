@@ -58,7 +58,7 @@ class PostSearch extends Post
         $dataProvider = new ActiveDataProvider([
             'query' => $query,
             'pagination' => [
-                'pageSize' => 10,
+                'pageSize' => 5,
             ],
             'sort' => [
                 'defaultOrder' => 'id DESC',
@@ -83,7 +83,8 @@ class PostSearch extends Post
             'updated_at' => $this->updated_at,
         ]);
 
-        $query->andFilterWhere(['like', 'title', $this->title]);
+        $query->andFilterWhere(['like', 'title', $this->title])
+            ->andFilterWhere(['like', 'tags', $this->tags]);
 
         $query->innerJoin(Admin::tableName(), 'post.author_id = admin.id');
 

@@ -10,6 +10,7 @@ return [
     'Sort' => '排序',
     'Remark' => '备注',
     'Posts' => '文章管理',
+    'Post' => '文章',
     'Post ID' => '文章ID',
     'Author ID' => '作者',
     'User ID' => '用户',
@@ -70,4 +71,8 @@ return [
     'Reset Password' => '重置密码',
     'Please fill out the following fields to reset password:' => '请填写下列信息重置密码：',
     'Comment Auditor' => '评论审核员',
+    'First Page' => '首页',
+    'Prev Page' => '上一页',
+    'Next Page' => '下一页',
+    'Last Page' => '尾页',
 ];
